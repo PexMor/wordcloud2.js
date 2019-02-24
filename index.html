@@ -2,24 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>wordcloud2.js - tag cloud/Wordle presentation on 2D canvas or HTML</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="">
-  <meta name="author" content="">
-  <!-- Le styles -->
-  <link href="//netdna.bootstrapcdn.com/bootstrap/2.2.2/css/bootstrap.min.css" rel="stylesheet">
-  <link href="//netdna.bootstrapcdn.com/bootstrap/2.2.2/css/bootstrap-responsive.min.css" rel="stylesheet">
+  <title>Example of wordcloud2.js</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link href="//fonts.googleapis.com/css?family=Finger+Paint" id="link-webfont" rel="stylesheet">
-  <script defer src="//ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
-  <script defer src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.2.2/bootstrap.min.js"></script>
-  <script defer src="./src/wordcloud2.js"></script>
-  <script defer src="./index.js"></script>
-
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Archivo+Narrow:400%7CBowlby+One+SC:400%7CChau+Philomene+One:400%7CChela+One:400%7CCoda:800%7CInknut+Antiqua:400%7CJacques+Francois+Shadow%7CJosefin+Sans:400%7CLilita+One:400%7CLimelight:400%7CLondrina+Sketch%7CModak:400%7CNiconne:400%7COleo+Script:700%7COpen+Sans:400%7CPacifico%7CPlayfair+Display:400%7CRammetto+One:400%7CRubik+Mono+One:400%7CSniglet:800%7CSquada+One%7CTitillium+Web:900&amp;subset=latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext,latin-ext" media="all">
   <style>
-  @media (min-width: 980px) {
-    body { padding-top: 60px; }
-  }
-
   *[hidden] {
     display: none;
   }
@@ -80,126 +68,176 @@
     0% { opacity: 1; }
     100% { opacity: 0; }
   }
-
   </style>
-  <script type="text/javascript">
-    if (window.location.hostname === 'timdream.org') {
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-4623408-2']);
-      _gaq.push(['_trackPageview']);
-    }
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-
-  </script>
 </head>
 <body>
-  <div class="navbar navbar-fixed-top navbar-inverse">
-    <div class="navbar-inner">
-      <div class="container">
-        <a class="brand" href="./">wordcloud2.js</a>
-        <ul class="nav">
-          <li class="active"><a href="./">Demo</a></li>
-          <li><a href="https://github.com/timdream/wordcloud2.js">Code</a></li>
-          <li><a href="https://github.com/timdream/wordcloud2.js/blob/gh-pages/README.md">README</a></li>
-          <li><a href="https://github.com/timdream/wordcloud2.js/blob/gh-pages/API.md">API</a></li>
-          <li><a href="https://timdream.org/">timdream</a></li>
-        </ul>
-      </div>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">Navbar</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/timdream/wordcloud2.js">Original Project</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#cust">Customize</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/PexMor/wordcloud2.js">PexMor patch</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/PexMor/wordcloud2.js/blob/gh-pages/README.md">README.md</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/PexMor/wordcloud2.js/blob/gh-pages/API.md">API.md</a>
+        </li>
+      </ul>
     </div>
-  </div>
+  </nav>
+
   <div class="container">
     <p class="lead"><strong>wordcloud2.js</strong>, tag cloud/Wordle presentation on 2D canvas or HTML</p>
     <div id="not-supported" class="alert" hidden>
       <strong>Your browser is not supported.</strong>
     </div>
-    <form id="form" method="get" action="">
-      <div class="row">
-        <div class="span12" id="canvas-container">
-          <canvas id="canvas" class="canvas"></canvas>
-          <div id="html-canvas" class="canvas hide"></div>
-        </div>
-        <div class="span6">
-          <button class="btn btn-primary" type="submit">Run</button>
-          <div class="btn-group">
-            <button class="btn" type="button" id="btn-canvas" disabled title="Show drawn canvas element.">Canvas</button>
-            <button class="btn" type="button" id="btn-html-canvas" title="Show Word Cloud with elements.">Elements</button>
-          </div>
-          <a class="btn" id="btn-save" href="#" download="wordcloud.png" title="Save canvas">Save Image</a>
-          <span id="loading" hidden>......</span>
-        </div>
-        <div class="span6">
-          <select id="examples" class="">
-            <option selected>Examples</option>
-            <option value="love">Love of the world</option>
-            <option value="web-tech">Web Technologies</option>
-            <option value="quick-fox">The quick brown fox</option>
-            <option value="les-miz">Les Misérables</option>
-            <option value="red-chamber" lang="zh-tw">紅樓夢</option>
-            <option value="taiwan">Taiwan</option>
-          </select>
+  </div>
+
+  <!--div class="container-fluid" id="canvas-container"-->
+  <div class="container" id="canvas-container">
+    <canvas id="canvas" class="canvas"></canvas>
+    <div id="html-canvas" class="canvas hide"></div>
+  </div>
+
+  <div class="container">
+    <form id="form" method="GET">
+    <div class="btn-group">
+      <button class="btn btn-primary" type="submit">Run</button>
+      <button class="btn" type="button" id="btn-canvas" disabled title="Show drawn canvas element.">Canvas</button>
+      <button class="btn" type="button" id="btn-html-canvas" title="Show Word Cloud with elements.">Elements</button>
+      <a class="btn" id="btn-save" href="#" download="wordcloud.png" title="Save canvas">Save Image</a>
+
+      <div class="dropdown" style="inline-block">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Font select
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" id="fontSel">
         </div>
       </div>
-      <div class="tabbable">
-        <ul class="nav nav-tabs">
-          <li class="active"><a href="#tab-list" data-toggle="tab">List</a></li>
-          <li><a href="#tab-config" data-toggle="tab">Configuration</a></li>
-          <li><a href="#tab-dim" data-toggle="tab">Dimension</a></li>
-          <li><a href="#tab-mask" data-toggle="tab">Mask image</a></li>
-          <li><a href="#tab-webfont" data-toggle="tab">Web Font</a></li>
-        </ul>
-        <div class="tab-content">
-          <div class="tab-pane active" id="tab-list">
-            <textarea id="input-list" placeholder="Put your list here." rows="2" cols="30" class="span12"></textarea>
-          </div>
-          <div class="tab-pane" id="tab-config">
-            <label>Options as a literal Javascript object</label>
-            <textarea id="config-option" placeholder="Put your literal option object here." rows="2" cols="30" class="span12"></textarea>
-            <!--
-            XXX Security consideration:
-              Do not implement a feature that allow users to submit/share their script here
-              directly or indirectly. Doing so would invite XSS attack on your site.
-            -->
-            <span class="help-block">See <a href="https://github.com/timdream/wordcloud2.js/blob/gh-pages/API.md">API</a> document for available options.</span>
-          </div>
-          <div class="tab-pane" id="tab-dim">
-            <label for="config-width">Width</label>
-            <div class="input-append">
-              <input type="number" id="config-width" class="input-small" min="1">
-              <span class="add-on">px</span>
-            </div>
-            <span class="help-block">Leave blank to use page width.</span>
-            <label for="config-height">Height</label>
-            <div class="input-append">
-              <input type="number" id="config-height" class="input-small" min="1">
-              <span class="add-on">px</span>
-            </div>
-            <span class="help-block">Leave blank to use 0.65x of the width.</span>
-            <label for="config-height">Device pixel density (<span title="Dots per 'px' unit">dppx</span>)</label>
-            <div class="input-append">
-              <input type="number" id="config-dppx" class="input-mini" min="1" value="1" required>
-              <span class="add-on">x</span>
-            </div>
-            <span class="help-block">Adjust the weight, grid size, and canvas pixel size for high pixel density displays.</span>
-          </div>
-          <div class="tab-pane" id="tab-mask">
-            <label for="config-mask">Image mask</label>
-            <input type="file" id="config-mask"><button id="config-mask-clear" class="btn" type="button">Clear</button>
-            <span class="help-block">A silhouette image which the white area will be excluded from drawing texts. The <code>shape</code> option will continue to apply as the shape of the cloud to grow.</span>
-            <span class="help-block">When there is an image set, <code>clearCanvas</code> will be set to <code>false</code>.</span>
-          </div>
-          <div class="tab-pane" id="tab-webfont">
-            <label for="config-css">Extra Web Font CSS</label>
-            <input type="url" id="config-css" size="40" class="input-xxlarge" placeholder="https://fonts.googleapis.com/css?family=Libre+Baskerville:700" value="https://fonts.googleapis.com/css?family=Finger+Paint">
-            <span class="help-block">Find your favorite font on <a href="https://www.google.com/webfonts">Google Web Fonts</a>. Re-run if the font didn't load in time.</span>
-         </div>
-        </div>
-      </div>
+    </div>
+
+    <span id="loading" hidden>[working]</span>
     </form>
   </div>
+
+  <div class="container">
+    <form>
+      <h2 id='cust'>Customize and enjoy</h2>
+
+      <select id="examples" class="form-control">
+        <option selected>Examples - please select</option>
+        <option value="love">Love of the world</option>
+        <option value="web-tech">Web Technologies</option>
+        <option value="web-tech2">Web Technologies (font: Libre Baskerville)</option>
+        <option value="quick-fox">The quick brown fox</option>
+        <option value="les-miz">Les Misérables</option>
+        <option value="red-chamber" lang="zh-tw">紅樓夢</option>
+        <option value="taiwan">Taiwan</option>
+      </select>
+
+      <br />
+
+      <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" id="list-tab" data-toggle="tab" href="#list" role="tab" aria-controls="list" aria-selected="true">List</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="config-tab" data-toggle="tab" href="#config" role="tab" aria-controls="config" aria-selected="false">Configuration</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="dim-tab" data-toggle="tab" href="#dim" role="tab" aria-controls="dim" aria-selected="false">Dimensions</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="mask-tab" data-toggle="tab" href="#mask" role="tab" aria-controls="mask" aria-selected="false">Image Mask</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="webfont-tab" data-toggle="tab" href="#webfont" role="tab" aria-controls="webfont" aria-selected="false">Web Font</a>
+        </li>
+      </ul>
+      <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="list" role="tabpanel" aria-labelledby="list-tab">
+          <textarea id="input-list" placeholder="Put your list here." rows="6" cols="30" class="form-control"></textarea>
+        </div>
+        <div class="tab-pane fade" id="config" role="tabpanel" aria-labelledby="config-tab">
+          <label>Options as a literal Javascript object</label>
+          <textarea id="config-option" placeholder="Put your literal option object here." rows="6" cols="30" class="form-control"></textarea>
+          <!--
+          XXX Security consideration:
+            Do not implement a feature that allow users to submit/share their script here
+            directly or indirectly. Doing so would invite XSS attack on your site.
+          -->
+          <span class="help-block">See <a href="https://github.com/PexMor/wordcloud2.js/blob/gh-pages/API.md">API</a> document for available options.</span>
+        </div>
+        <div class="tab-pane fade" id="dim" role="tabpanel" aria-labelledby="dim-tab">
+          <label for="config-width">Width</label>
+          <div class="input-append">
+            <input type="number" id="config-width" class="input-small" min="1">
+            <span class="add-on">px</span>
+          </div>
+          <span class="help-block">Leave blank to use page width.</span>
+          <label for="config-height">Height</label>
+          <div class="input-append">
+            <input type="number" id="config-height" class="input-small" min="1">
+            <span class="add-on">px</span>
+          </div>
+          <span class="help-block">Leave blank to use 0.65x of the width.</span>
+          <label for="config-height">Device pixel density (<span title="Dots per 'px' unit">dppx</span>)</label>
+          <div class="input-append">
+            <input type="number" id="config-dppx" class="input-mini" min="1" value="1" required>
+            <span class="add-on">x</span>
+          </div>
+          <span class="help-block">Adjust the weight, grid size, and canvas pixel size for high pixel density displays.</span>
+        </div>
+        <div class="tab-pane fade" id="mask" role="tabpanel" aria-labelledby="mask-tab">
+          <div class="form-group">
+            <label for="config-mask">Image mask</label>
+            <input type="file" id="config-mask" class="form-control-file">
+          </div>
+          <button id="config-mask-clear" class="btn btn-secondary" type="button">Clear</button>
+          <p class="help-block">A silhouette image which the white area will be excluded from drawing texts. The <code>shape</code> option will continue to apply as the shape of the cloud to grow.</p>
+          <p class="help-block">When there is an image set, <code>clearCanvas</code> will be set to <code>false</code>.</p>
+        </div>
+        <div class="tab-pane fade" id="webfont" role="tabpanel" aria-labelledby="webfont-tab">
+          <div class="form-group">
+            <label for="config-css">Extra Web Font CSS</label>
+            <!--input type="url" id="xconfig-css" size="40" class="input-xxlarge" placeholder="https://fonts.googleapis.com/css?family=Libre+Baskerville:700" value="https://fonts.googleapis.com/css?family=Finger+Paint" class="form-control"-->
+            <select id="config-css" class="form-control">
+              <option value="https://fonts.googleapis.com/css?family=Libre+Baskerville:700">Libre Baskerville</option>
+              <option value="https://fonts.googleapis.com/css?family=Archivo+Narrow:400:latin-ext">Archivo Narrow</option>
+            </select>
+          </div>
+          <p class="help-block">Find your favorite font on <a href="https://www.google.com/webfonts">Google Web Fonts</a>. Re-run if the font didn't load in time.</p>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="container">
+    <hr />
+    <footer>
+      <p><a href="//creativecommons.org/publicdomain/zero/1.0/"><img alt="CC0" src="//i.creativecommons.org/p/zero/1.0/88x31.png" /></a></p>
+    </footer>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script defer src="src/wordcloud2.js"></script>
+  <script defer src="index.js"></script>
 </body>
 </html>

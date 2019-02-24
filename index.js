@@ -1,5 +1,38 @@
 'use strict';
 
+var fontList = [
+  "'Archivo Narrow'",
+  "'Arial Black',Gadget,sans-serif",
+  "'Bowlby One SC'",
+  "'Chau Philomene One'",
+  "Verdana,Geneva,sans-serif"
+];
+
+var gFonts = {
+  "Archivo Narrow": "Archivo Narrow:400:latin-ext",
+  "Bowlby One SC": "Bowlby One SC:400:latin-ext",
+  "Chau Philomene One": "Chau Philomene One:400:latin-ext"
+};
+
+for(var idFont in gFonts) {
+  var url='https://fonts.googleapis.com/css?family='+gFonts[idFont].replace(/ /g,"+");
+  var link = document.createElement('link');
+  link.setAttribute('rel', 'stylesheet');
+  link.setAttribute('type', 'text/css');
+  link.setAttribute('href', url);
+  document.head.appendChild(link);
+};
+
+var fs = document.getElementById('fontSel');
+var cont = "";
+for(var fontNo in fontList) {
+  var font = fontList[fontNo];
+  var firstFont = font.split(",");
+  var firstFontWoQ = firstFont[0].replace(/'/g,"");
+  cont+='<a class="dropdown-item"  href="#" style="font-family: '+font+'">'+firstFontWoQ+'</a>';
+};
+fs.innerHTML=cont;
+
 var examples = {
   'taiwan': {
     list: (function() {
@@ -53,6 +86,27 @@ var examples = {
             '  backgroundColor: \'#001f00\'\n' +
             '}',
     fontCSS: 'https://fonts.googleapis.com/css?family=Finger+Paint'
+  },
+  'web-tech2': {
+    list: '26 Web Technologies\n20 HTML\n20 <canvas>\n' +
+          '15 CSS\n15 JavaScript\n12 Document Object Model\n12 <audio>\n12 <video>\n12 Web Workers\n12 XMLHttpRequest\n12 SVG\n' +
+          '9 JSON.parse()\n9 Geolocation\n9 data attribute\n9 transform\n9 transition\n9 animation\n' +
+          '7 setTimeout\n7 @font-face\n7 Typed Arrays\n7 FileReader API\n7 FormData\n7 IndexedDB\n' +
+          '7 getUserMedia()\n7 postMassage()\n7 CORS\n6 strict mode\n6 calc()\n6 supports()\n' +
+          '6 media queries\n6 full screen\n6 notification\n6 orientation\n6 requestAnimationFrame\n' +
+          '5 border-radius\n5 box-sizing\n5 rgba()\n5 text-shadow\n5 box-shadow\n5 flexbox\n5 viewpoint',
+    option: '{\n' +
+            '  gridSize: 18,\n' +
+            '  weightFactor: 3,\n' +
+            '  fontFamily: \'Libre Baskerville, sans-serif\',\n' +
+            '  color: \'#a97\',\n' +
+            '  hover: window.drawBox,\n' +
+            '  click: function(item) {\n' +
+            '    alert(item[0] + \': \' + item[1]);\n' +
+            '  },\n' +
+            '  backgroundColor: \'#fff\'\n' +
+            '}',
+    fontCSS: 'https://fonts.googleapis.com/css?family=Libre+Baskerville:700'
   },
   'les-miz': {
     list: '30 Les Misérables\n20 Victor Hugo\n15 Jean Valjean\n15 Javert\n15 Fantine\n' +
@@ -305,6 +359,7 @@ jQuery(function($) {
     $loading.prop('hidden', false);
 
     // Load web font
+    console.log($css.val());
     $webfontLink.prop('href', $css.val());
 
     // devicePixelRatio
