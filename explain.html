@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Wordcloud algorithm</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link href="//fonts.googleapis.com/css?family=Oleo+Script" id="link-webfont" rel="stylesheet">
+  <link href="//stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script defer src="explain.js"></script>
+  <link href="explain.css?random" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h1>Wordcloud algorithm</h1>
+    <a href='https://stackoverflow.com/a/1478314/1300319'>Word from Jonathan Feinberg the author of Wordle @ StackOverflow</a>
+    <br />
+    Jason Davies <a href='https://www.jasondavies.com/wordcloud/about/'>explanation</a> and interactive
+    <a href='https://www.jasondavies.com/wordcloud/'>demo</a> and source
+    <a href='https://github.com/jasondavies/d3-cloud'>Github: d3-cloud</a>
+    <hr />
+
+    <h2>1. the canvas</h2>
+    <div id="cc01" class="fillR"><canvas id="c01" class="fillG"></canvas></div>
+
+    <h2>2. match the size</h2>
+    <div id="cc02" class="fillR"><canvas id="c02" class="fillG"></canvas></div>
+    <script>
+      function step02(id) {
+        var devicePixelRatio = 1.0
+        var width = $('#cc'+id).width()
+        var height = Math.floor(width * 0.65)
+        var pixelWidth = width
+        var pixelHeight = height
+        var canvas = $('#c'+id)
+        if (devicePixelRatio !== 1) {
+          canvas.css({'width': width + 'px', 'height': height + 'px'})
+          pixelWidth *= devicePixelRatio
+          pixelHeight *= devicePixelRatio
+        } else {
+          canvas.css({'width': '', 'height': '' })
+        }
+        canvas.attr('width', pixelWidth)
+        canvas.attr('height', pixelHeight)
+      }
+      step02("02")
+    </script>
+
+    <h2>3. get the center and max radius</h2>
+    You can see the center by indicated by small circe in the middle and the maxRadius, maxRadius-5, maxRadius-10 circles below.
+    <br />
+    Note: the maxRadius circle might be actually invisible or a single dot in the corners.
+    <div id="cc03" class="fillR"><canvas id="c03" class="fillG"></canvas></div>
+    <script>
+      step02("03")
+      // grid size shortname
+      var g = 4
+      var maskGapWidth = 1
+      var maskRectWidth = g - maskGapWidth
+      function drawCircle(x,y,r,canvas) {
+        var ctx = canvas.getContext("2d")
+        ctx.beginPath()
+        ctx.arc(x, y, r, 0, 2 * Math.PI, true)
+        ctx.stroke()
+      }
+      function drawMarker(x,y,canvas) {
+        var r = 4
+        drawCircle(x,y,r,canvas)
+      }
+      // new global variables
+      var maxRadius, ngx, ngy, center
+      function step03(id) {
+        var canvas = $('#c'+id)[0]
+        console.log("canvas.width:",canvas.width)
+        ngx = Math.ceil(canvas.width ) // / g)
+        ngy = Math.ceil(canvas.height ) // / g)
+        console.log("ngx:",ngx,"ngy:",ngy)
+        var cx = ngx / 2
+        var cy = ngy / 2
+        center = { x: cx, y: cy }
+        console.log("center:",center)
+        drawMarker(cx,cy,canvas)
+        // Pythagorean theorem
+        maxRadius = Math.floor(Math.sqrt(cx * cx + cy * cy))
+        // maxRadius = Math.floor(Math.sqrt(ngx * ngx + ngy * ngy))
+        console.log("maxRadius:",maxRadius)
+        drawCircle(cx,cy,maxRadius,canvas)
+        drawCircle(cx,cy,maxRadius-5,canvas)
+        drawCircle(cx,cy,maxRadius-10,canvas)
+      }
+      step03("03")
+      // new global array, occupancy grid; true stands for free pixel
+      var grid = []
+      gx = ngx;
+      while (gx--) {
+        grid[gx] = [];
+        gy = ngy;
+        while (gy--) {
+          grid[gx][gy] = true;
+        }
+      }
+    </script>
+
+    <h2>4. put one word</h2>
+    Where word is actually tripplet of ["word-itself","weight-or-frequency","other-attributes"]
+    <div id="cc04" class="fillR"><canvas id="c04" class="fillG"></canvas></div>
+    <div id="debugWord"></div>
+    <script>
+      var debug = false
+      var debugWord = $("#debugWord")[0]
+      var ellipticity = 1
+      var drawOutOfBound = false
+      step02("04")
+      // step 03 can be actually skipped as we have already the variables available (ugly trick of shared context)
+      lorem = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Phasellus faucibus molestie nisl. Etiam sapien elit, consequat eget, tristique non, venenatis quis, ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur? Nulla non lectus sed nisl molestie malesuada. Nullam faucibus mi quis velit. Nullam feugiat, turpis at pulvinar vulputate, erat libero tristique tellus, nec bibendum odio risus sit amet ante. Integer tempor. Etiam neque. Suspendisse nisl. Ut tempus purus at lorem. Nullam at arcu a est sollicitudin euismod. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Pellentesque pretium lectus id turpis. Nam quis nulla. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas."
+      lorem2 = lorem.replace(/[^a-zA-Z]/g, " ");
+      loremSplit = lorem2.split(" ")
+      loremSplit = loremSplit.filter(v=>v!='')
+      var seen = {}
+      function uniq(a) {
+        seen = {};
+        return a.filter(function(item) {
+          if (seen.hasOwnProperty(item)) {
+            seen[item]++
+            return false
+          } else {
+            seen[item] = 1
+            return true
+          }
+        });
+      }
+      loremSplit = uniq(loremSplit)
+      console.log(loremSplit)
+      items = [
+        { word: "Explain", wordWeight: 12, attrs: "http://url-or-so" },
+        { word: "How", wordWeight: 10, attrs: "http://url-or-so" },
+        { word: "Things", wordWeight: 10, attrs: "http://url-or-so" },
+        { word: "Are", wordWeight: 10, attrs: "http://url-or-so" },
+        { word: "Done", wordWeight: 10, attrs: "http://url-or-so" }
+      ]
+      for(var ii=0;ii<loremSplit.length;ii++) {
+        var addItem = { word: loremSplit[ii], wordWeight: seen[loremSplit[ii]], attrs: "other" }
+        items.push(addItem)
+      }
+      console.log(items)
+
+      var minFontSize = (function getMinFontSize() {
+        var ctx = document.createElement('canvas').getContext('2d');
+        var size = 20;
+        var hanWidth, mWidth;
+        while (size) {
+          ctx.font = size.toString(10) + 'px sans-serif';
+          if ((ctx.measureText('\uFF37').width === hanWidth) &&
+              (ctx.measureText('m').width) === mWidth) {
+            // detect that text was not drawn as expected
+            return (size + 1);
+          }
+          hanWidth = ctx.measureText('\uFF37').width;
+          mWidth = ctx.measureText('m').width;
+          size--;
+        }
+        return 0;
+      })();
+
+      console.log("minFontSize:",minFontSize)
+
+      function getRotateDeg() {
+        // horizontal
+        var minRotation = 0
+        // 30 degrees range in radians (well readable and uphill)
+        var rotationRange = Math.PI / 2
+        // divide the angle by 4
+        var rotationSteps = 8
+        return minRotation +
+          Math.floor(Math.random() * rotationSteps) *
+          rotationRange / (rotationSteps - 1);
+      }
+
+      // transform word weight into font-size
+      var weightFactorValue = 12
+      function weightToFontSite(wordWeight) {
+        return weightFactorValue * wordWeight
+      }
+
+      function scanGridForOccupancy(fctx, gridSize ) {
+        // cgw,cgh,width,height) {
+        var imageData = fctx.getImageData(0, 0, gridSize.w * g, gridSize.h * g).data
+        var occupied = [];
+        var gx = gridSize.w, gy, x, y;
+        var bounds = [gridSize.h / 2, gridSize.w / 2, gridSize.h / 2, gridSize.w / 2];
+        while (gx--) {
+          gy = gridSize.h;
+          while (gy--) {
+            y = g;
+            singleGridLoop: {
+              while (y--) {
+                x = g;
+                while (x--) {
+                  if (imageData[((gy * g + y) * gridSize.w * g +
+                                 (gx * g + x)) * 4 + 3]) {
+                    occupied.push([gx, gy]);
+
+                    if (gx < bounds[3]) {
+                      bounds[3] = gx;
+                    }
+                    if (gx > bounds[1]) {
+                      bounds[1] = gx;
+                    }
+                    if (gy < bounds[0]) {
+                      bounds[0] = gy;
+                    }
+                    if (gy > bounds[2]) {
+                      bounds[2] = gy;
+                    }
+
+                    if (debug) {
+                      fctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+                      fctx.fillRect(gx * g, gy * g, g - 0.5, g - 0.5);
+                    }
+                    break singleGridLoop;
+                  }
+                }
+              }
+              if (debug) {
+                fctx.fillStyle = 'rgba(0, 0, 255, 0.5)';
+                fctx.fillRect(gx * g, gy * g, g - 0.5, g - 0.5);
+              }
+            }
+          }
+        }
+        return { bounds: bounds, occupied: occupied };
+      }
+
+      function drawWord(fctx,wProp,cfg,width,height,fillTextOffset,fw,fh) {
+        // Scale the canvas with |mu|.
+        fctx.scale(1 / cfg.mu, 1 / cfg.mu)
+        fctx.translate(width * cfg.mu / 2, height * cfg.mu / 2)
+        fctx.rotate(- wProp.rotateDeg)
+
+        // Once the width/height is set, ctx info will be reset.
+        // Set it again here.
+        fctx.font = wProp.fontWeight + ' ' + (wProp.fontSize * cfg.mu).toString(10) + 'px ' + wProp.fontFamily
+
+        // Fill the text into the fcanvas.
+        // XXX: We cannot because textBaseline = 'top' here because
+        // Firefox and Chrome uses different default line-height for canvas.
+        // Please read https://bugzil.la/737852#c6.
+        // Here, we use textBaseline = 'middle' and draw the text at exactly
+        // 0.5 * fontSize lower.
+        fctx.fillStyle = '#000'
+        fctx.textBaseline = 'middle'
+        fctx.fillText(wProp.word, fillTextOffset.x * cfg.mu, (fillTextOffset.y + wProp.fontSize * 0.5) * cfg.mu)
+        if (debug) {
+          fctx.strokeRect(fillTextOffset.x * cfg.mu, fillTextOffset.y * cfg.mu, fw * cfg.mu, fh * cfg.mu)
+        }
+      }
+
+      function measureWord(wProp, cfg) {
+        console.log("wProp:",wProp)
+        console.log("cfg:",cfg)
+
+        var fcanvas = document.createElement('canvas')
+        fcanvas.style.cssText = 'border:1px dotted green'
+        var fctx = fcanvas.getContext('2d', { willReadFrequently: true })
+
+        fctx.font = wProp.fontWeight + ' ' + (wProp.fontSize * cfg.mu).toString(10) + 'px ' + wProp.fontFamily
+
+        // Estimate the dimension of the text with measureText()
+        var fw = fctx.measureText(wProp.word).width / cfg.mu
+        var fh = Math.max(wProp.fontSize * cfg.mu,
+                          fctx.measureText('m').width,
+                          fctx.measureText('\uFF37').width) / cfg.mu
+
+        // Create a boundary box that is larger than our estimates,
+        // so text don't get cut of (it sill might)
+        var boxWidth = fw + fh * 2
+        var boxHeight = fh * 3
+        var fgw = Math.ceil(boxWidth / g)
+        var fgh = Math.ceil(boxHeight / g)
+        boxWidth = fgw * g
+        boxHeight = fgh * g
+
+        // Calculate the proper offsets to make the text centered at
+        // the preferred position.
+
+        var fillTextOffset = {}
+        // This is simply half of the width.
+        fillTextOffset.x = - fw / 2
+        // Instead of moving the box to the exact middle of the preferred
+        // position, for Y-offset we move 0.4 instead, so Latin alphabets look
+        // vertical centered.
+        fillTextOffset.y = - fh * 0.4
+
+        var gridSize = {}
+        // Calculate the actual dimension of the canvas, considering the rotation.
+        // Grid size (in grid units)
+        gridSize.h = Math.ceil((boxWidth * Math.abs(Math.sin(wProp.rotateDeg)) +
+                             boxHeight * Math.abs(Math.cos(wProp.rotateDeg))) / g)
+        gridSize.w = Math.ceil((boxWidth * Math.abs(Math.cos(wProp.rotateDeg)) +
+                             boxHeight * Math.abs(Math.sin(wProp.rotateDeg))) / g)
+        // real size of the canvas multiplied by the grid unit -> in pixels
+        var width = gridSize.w * g
+        var height = gridSize.h * g
+
+        fcanvas.setAttribute('width', width)
+        fcanvas.setAttribute('height', height)
+
+        //if (debug) {
+        debugWord.appendChild(fcanvas)
+        //}
+
+        fctx.save()
+        wProp.fontFamily = fontFamily
+        drawWord(fctx,wProp,cfg,width,height,fillTextOffset,fw,fh)
+        fctx.restore()
+
+        var occRes = scanGridForOccupancy(fctx,gridSize)
+        console.log("bounds:",occRes.bounds)
+        if (debug) {
+          fctx.fillStyle = 'rgba(0, 255, 0, 0.5)'
+          fctx.fillRect(occRes.bounds[3] * g,
+                        occRes.bounds[0] * g,
+                        (occRes.bounds[1] - occRes.bounds[3] + 1) * g,
+                        (occRes.bounds[2] - occRes.bounds[0] + 1) * g)
+        }
+
+        wProp.textOffset = fillTextOffset
+        wProp.textSize = { w: fw, h: fh }
+        console.log("wProp:",wProp)
+
+        return {
+          cfg: cfg,
+          bounds: occRes.bounds,
+          gridSize: gridSize,
+          occupied: occRes.occupied,
+          wProp: wProp
+        };
+      }
+      
+      var fontFamily = "Oleo Script"
+
+      function getTextInfo(word, wordWeight, rotateDeg) {
+        var fontSize = weightToFontSite(wordWeight)
+        var mu = 1
+        if (fontSize < minFontSize) {
+          mu = Math.Ceil(minFontSize / fontSize / 2) * 2
+        }
+        console.log("mu:",mu)
+        var fontWeight = 'normal'
+
+        var wProp = { word: word, wordWeight: wordWeight, fontWeight: fontWeight, fontSize: fontSize, rotateDeg: rotateDeg }
+        var cfg = { mu: mu }
+        return measureWord(wProp, cfg)
+      }
+
+      function shapePentagon(theta) {
+        var thetaPrime = (theta + 0.955) % (2 * Math.PI / 5)
+        return 1 / (Math.cos(thetaPrime) + 0.726543 * Math.sin(thetaPrime))
+      }
+      function shapeStar(theta) {
+        var thetaPrime = (theta + 0.955) % (2 * Math.PI / 10);
+        if ((theta + 0.955) % (2 * Math.PI / 5) - (2 * Math.PI / 10) >= 0) {
+          return 1 / (Math.cos((2 * Math.PI / 10) - thetaPrime) +
+                      3.07768 * Math.sin((2 * Math.PI / 10) - thetaPrime));
+        } else {
+          return 1 / (Math.cos(thetaPrime) +
+                      3.07768 * Math.sin(thetaPrime));
+        }
+      }
+      var shape = shapeStar
+      
+      var pointsAtRadius = [];
+      function getPointsAtRadius(center,radius) {
+        // skip if already cached
+        if (pointsAtRadius[radius]) {
+          return pointsAtRadius[radius];
+        }
+        console.log("getPointsAtRadius:",radius)
+        // Look for these number of points on each radius
+        // more dense on larger radius
+        var T = radius * 8;
+
+        // Getting all the points at this radius
+        var t = T;
+        var points = [];
+
+        // console.log("center:",center)
+        if (radius === 0) {
+          points.push([center[0], center[1], 0]);
+        }
+
+        var canvas = $('#c04')[0]
+        while (t--) {
+          // distort the radius to put the cloud in shape
+          // this has simple shape of circe
+          var rx = 0.7;
+          rx = shape(t / T * 2 * Math.PI)
+          // Push [x, y, t]; t is used solely for getTextColor()
+          var px = center[0] + radius * rx * Math.cos(-t / T * 2 * Math.PI)
+          var py = center[1] + radius * rx * Math.sin(-t / T * 2 * Math.PI) * ellipticity
+          var pz = t / T * 2 * Math.PI
+          points.push([ px, py, pz])
+          if (r%5==0&&t%5==0) {
+            // drawCircle(px*g,py*g,3,canvas)
+          }
+        }
+
+        pointsAtRadius[radius] = points;
+        return points;
+      }
+
+      // Based on http://jsfromhell.com/array/shuffle
+      function shuffleArray(arr) {
+        for (var j, x, i = arr.length; i;
+          j = Math.floor(Math.random() * i),
+          x = arr[--i], arr[i] = arr[j],
+          arr[j] = x) {}
+        return arr;
+      }
+
+      function canFitText(gx, gy, textInfo) {
+        // console.log("gx:",gx,"gy:",gy)
+        // Go through the occupied points,
+        // return false if the space is not available.
+        var i = textInfo.occupied.length
+        while (i--) {
+          var px = gx + textInfo.occupied[i][0]
+          var py = gy + textInfo.occupied[i][1]
+
+          if (px >= ngx || py >= ngy || px < 0 || py < 0) {
+            if (!drawOutOfBound) {
+              return false
+            }
+            continue;
+          }
+
+          if (!grid[px][py]) {
+            return false
+          }
+        }
+        return true
+      }
+
+      /* Help function to updateGrid */
+      function fillGridAt(x, y, drawMask, dimension) {
+        if (x >= ngx || y >= ngy || x < 0 || y < 0) {
+          return;
+        }
+
+        grid[x][y] = false;
+
+        if (drawMask) {
+          var canvas = $('#c04')[0]
+          var ctx = canvas.getContext('2d');
+          ctx.fillRect(x * g, y * g, maskRectWidth, maskRectWidth);
+        }
+      }
+
+      /* Update the filling information of the given space with occupied points.
+         Draw the mask on the canvas if necessary. */
+      function updateGrid(gx, gy, textInfo) {
+        var occupied = textInfo.occupied
+        var drawMask = false
+        var ctx
+        var canvas = $('#c04')[0]
+        if (drawMask) {
+          ctx = canvas.getContext('2d')
+          ctx.save()
+          ctx.fillStyle = 'blue'
+        }
+
+        var dimension;
+        //*
+        //if (interactive) {
+          var bounds = textInfo.bounds;
+          dimension = {
+            x: (gx + bounds[3]) * g,
+            y: (gy + bounds[0]) * g,
+            w: (bounds[1] - bounds[3] + 1) * g,
+            h: (bounds[2] - bounds[0] + 1) * g
+          };
+        //}
+        //*/
+
+        var i = occupied.length;
+        while (i--) {
+          var px = gx + occupied[i][0];
+          var py = gy + occupied[i][1];
+
+          if (px >= ngx || py >= ngy || px < 0 || py < 0) {
+            continue;
+          }
+
+          fillGridAt(px, py, drawMask, dimension, item);
+        }
+
+        if (drawMask) {
+          ctx.restore();
+        }
+      }
+
+      /* Actually draw the text on the grid */
+      function drawText(gx, gy, textInfo, distance) {
+        var dimension;
+        var bounds = textInfo.bounds;
+        dimension = {
+          x: (gx + bounds[3]) * g,
+          y: (gy + bounds[0]) * g,
+          w: (bounds[1] - bounds[3] + 1) * g,
+          h: (bounds[2] - bounds[0] + 1) * g
+        };
+
+        /// add the canvas here properly
+        var canvas = $('#c04')[0]
+        var ctx = canvas.getContext('2d')
+        var mu = textInfo.cfg.mu
+
+        // Save the current state before messing it
+        ctx.save()
+        
+        ctx.scale(1 / mu, 1 / mu)
+
+        ctx.font = textInfo.wProp.fontWeight + ' ' + (textInfo.wProp.fontSize * mu).toString(10) + 'px ' + fontFamily
+        ctx.fillStyle = 'green'
+        if (textInfo.wProp.wordWeight>=12) {
+          ctx.fillStyle = 'red'
+        } else if (textInfo.wProp.wordWeight>=10) {
+          ctx.fillStyle = 'blue'
+        }
+        // Translate the canvas position to the origin coordinate of where
+        // the text should be put.
+        ctx.translate((gx + textInfo.gridSize.w / 2) * g * mu,(gy + textInfo.gridSize.h / 2) * g * mu)
+
+        if (textInfo.wProp.rotateDeg !== 0) {
+          ctx.rotate(- textInfo.wProp.rotateDeg)
+        }
+
+        // Finally, fill the text.
+
+        // XXX: We cannot because textBaseline = 'top' here because
+        // Firefox and Chrome uses different default line-height for canvas.
+        // Please read https://bugzil.la/737852#c6.
+        // Here, we use textBaseline = 'middle' and draw the text at exactly
+        // 0.5 * fontSize lower.
+        ctx.textBaseline = 'middle';
+        var x = textInfo.wProp.textOffset.x * mu
+        var y = (textInfo.wProp.textOffset.y + textInfo.wProp.fontSize * 0.5) * mu
+        ctx.fillText(textInfo.wProp.word, x, y)
+        ctx.fillStyle = '#00f'
+        ctx.beginPath()
+        ctx.arc(x + textInfo.wProp.textSize.w/2, y, 3, 0, 2 * Math.PI, true)
+        ctx.fill()
+        ctx.beginPath()
+        ctx.moveTo(x, y)
+        ctx.lineTo(x + textInfo.wProp.textSize.w, y)
+        ctx.stroke()
+
+        // The below box is always matches how <span>s are positioned
+        // ctx.strokeRect(textInfo.wProp.textOffset.x, textInfo.wProp.textOffset.y, textInfo.wProp.textSize.w, textInfo.wProp.textSize.h)
+
+        // Restore the state.
+        ctx.restore();
+      };
+
+      // B: ??? questionable
+      var canvas = $('#c04')[0]
+      var ngx = Math.ceil(canvas.width / g)
+      var ngy = Math.ceil(canvas.height / g)
+      var center = [ ngx/2, ngy/2 ]
+      // E: ??? questionable
+
+      var grid = []
+      gx = ngx;
+      while (gx--) {
+        grid[gx] = [];
+        gy = ngy;
+        while (gy--) {
+          ux = gx - ngx/2
+          uy = gy - ngy/2
+          r = Math.sqrt(ux*ux+uy*uy)
+          grid[gx][gy] = r > 10 && r < 90
+        }
+      }
+
+      for(var ii=0;ii<items.length;ii++) {
+        var rot = getRotateDeg()
+
+        var item = items[ii]
+        var textInfo = getTextInfo(item.word,item.wordWeight,rot)
+
+        if ((textInfo.bounds[1] - textInfo.bounds[3]) < ngx &&
+            (textInfo.bounds[2] - textInfo.bounds[0]) < ngy) {
+          // we can fit into canvas
+          console.log("can fit within canvas")
+          var r = maxRadius + 1;
+
+          var tryToPutWordAtPoint = function(gxy) {
+            var gx = Math.floor(gxy[0] - textInfo.gridSize.w / 2);
+            var gy = Math.floor(gxy[1] - textInfo.gridSize.h / 2);
+            //var gw = textInfo.gridSize.w;
+            //var gh = textInfo.gridSize.h;
+
+            // If we cannot fit the text at this position, return false
+            // and go to the next position.
+            if (!canFitText(gx, gy, textInfo)) {
+              return false;
+            }
+
+            // Actually put the text on the canvas
+            // gx, gy, textInfo, wProp, distance, theta
+            drawText(gx, gy, textInfo, maxRadius - r)
+
+            // Mark the spaces on the grid as filled
+            updateGrid(gx, gy, textInfo)
+
+            // Return true so array.some() will stop and also return true.
+            return true;
+          };
+
+          while (r--) {
+            var points = getPointsAtRadius(center,maxRadius - r);
+            points = [].concat(points);
+            shuffleArray(points);
+
+            // Try to fit the words by looking at each point.
+            // array.some() will stop and return true
+            // when putWordAtPoint() returns true.
+            // If all the points returns false, array.some() returns false.
+            var drawn = points.some(tryToPutWordAtPoint);
+
+            if (drawn) {
+              // leave putWord() and return true
+              break;
+              //return true;
+            }
+          }
+        }
+      }
+    </script>
+    <hr />
+    <footer>
+      <p><a href="//creativecommons.org/publicdomain/zero/1.0/"><img alt="CC0" src="//i.creativecommons.org/p/zero/1.0/88x31.png" /></a> by Petr Moravek</p>
+    </footer>
+  </div>
+</body>
+</html>

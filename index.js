@@ -359,7 +359,6 @@ jQuery(function($) {
     $loading.prop('hidden', false);
 
     // Load web font
-    console.log($css.val());
     $webfontLink.prop('href', $css.val());
 
     // devicePixelRatio
